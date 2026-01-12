@@ -25,6 +25,22 @@ cd liberator
 pip install -e .
 ```
 
+### Setting Up GitHub (For Contributors)
+
+If you've cloned or created this repository locally and want to connect it to GitHub:
+
+```bash
+# Run the setup script
+./setup_github.sh
+
+# Or manually:
+# 1. Create a new repository on GitHub
+# 2. Add the remote:
+git remote add origin https://github.com/YOUR_USERNAME/liberator.git
+# 3. Push:
+git push -u origin main
+```
+
 ### Development Installation
 
 ```bash
