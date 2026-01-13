@@ -154,6 +154,20 @@ class MainWindow(QMainWindow):
         self.setWindowTitle("Liberator - Free Your Apps from Proprietary Platforms")
         self.setGeometry(100, 100, 1200, 800)
         
+        # Set window icon
+        from pathlib import Path
+        icon_paths = [
+            Path(__file__).parent.parent.parent / 'assets' / 'icon.png',
+            Path(__file__).parent.parent.parent / 'assets' / 'icon_512x512.png',
+            Path(__file__).parent.parent.parent / 'assets' / 'icon_256x256.png',
+        ]
+        
+        for icon_path in icon_paths:
+            if icon_path.exists():
+                from PyQt6.QtGui import QIcon
+                self.setWindowIcon(QIcon(str(icon_path)))
+                break
+        
         # Apply metallic theme
         from .theme import MAIN_WINDOW_STYLE
         self.setStyleSheet(MAIN_WINDOW_STYLE)

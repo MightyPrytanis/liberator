@@ -68,12 +68,23 @@ EOF
 
 chmod +x "${MACOS_DIR}/liberator_gui"
 
-# Copy icon if it exists
+# Copy icon if it exists (try .icns first, then PNG)
 if [ -f "assets/icon.icns" ]; then
     cp "assets/icon.icns" "${RESOURCES_DIR}/icon.icns"
-    # Update Info.plist to include icon
-    /usr/libexec/PlistBuddy -c "Add :CFBundleIconFile string icon" "${CONTENTS_DIR}/Info.plist" 2>/dev/null || \
-    /usr/libexec/PlistBuddy -c "Set :CFBundleIconFile icon" "${CONTENTS_DIR}/Info.plist"
+    ICON_NAME="icon"
+elif [ -f "assets/icon.png" ]; then
+    cp "assets/icon.png" "${RESOURCES_DIR}/icon.png"
+    ICON_NAME="icon"
+elif [ -f "assets/icon_512x512.png" ]; then
+    cp "assets/icon_512x512.png" "${RESOURCES_DIR}/icon.png"
+    ICON_NAME="icon"
+fi
+
+# Update Info.plist to include icon
+if [ -n "$ICON_NAME" ]; then
+    /usr/libexec/PlistBuddy -c "Add :CFBundleIconFile string ${ICON_NAME}" "${CONTENTS_DIR}/Info.plist" 2>/dev/null || \
+    /usr/libexec/PlistBuddy -c "Set :CFBundleIconFile ${ICON_NAME}" "${CONTENTS_DIR}/Info.plist"
+    echo "✅ Icon added to app bundle"
 fi
 
 echo "✅ App bundle created at: ${APP_DIR}"
