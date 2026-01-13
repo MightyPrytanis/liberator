@@ -131,6 +131,9 @@ liberator extract /path/to/captive-project -o ./liberated-app
 # Liberate from URL (GitHub, GitLab, etc.)
 liberator extract https://github.com/user/repo -o ./liberated-app
 
+# Liberate with OS compatibility (Windows, macOS, Linux)
+liberator extract /path/to/project -o ./liberated-app --target-os windows macos linux
+
 # Liberate and push to GitHub (create new repo)
 liberator extract /path/to/project -o ./liberated-app --github "new:my-repo"
 

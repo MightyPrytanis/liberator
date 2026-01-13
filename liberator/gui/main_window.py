@@ -29,11 +29,16 @@ class ExtractionThread(QThread):
     progress = pyqtSignal(str)
     error = pyqtSignal(str)
     
-    def __init__(self, source_path: str, output_path: str, platform: str = 'auto'):
+    def __init__(self, source_path: str, output_path: str, platform: str = 'auto', target_platforms=None):
         super().__init__()
         self.source_path = source_path
         self.output_path = output_path
         self.platform = platform
+        self.target_platforms = target_platforms or []
+    
+    def get_target_platforms(self):
+        """Get selected target platforms - placeholder, will be set by main window."""
+        return self.target_platforms
     
     def run(self):
         """Run the extraction."""
@@ -61,7 +66,7 @@ class ExtractionThread(QThread):
             self.progress.emit(f"Extracted {len(result.files)} files")
             self.progress.emit("Exporting to portable format...")
             
-            exporter = PortableExporter(self.output_path)
+            exporter = PortableExporter(self.output_path, target_platforms=self.target_platforms)
             export_result = exporter.export(result)
             
             message = f"Successfully liberated project!\n\nFiles: {export_result['files_exported']}\nOutput: {self.output_path}"
@@ -317,6 +322,34 @@ class MainWindow(QMainWindow):
         output_group.setLayout(output_layout)
         layout.addWidget(output_group)
         
+        # Target OS selection
+        os_group = QGroupBox("Target Operating Systems")
+        os_layout = QVBoxLayout()
+        
+        os_info = QLabel("Select OS(es) for compatibility (code will be adapted automatically):")
+        os_info.setWordWrap(True)
+        os_layout.addWidget(os_info)
+        
+        os_row1 = QHBoxLayout()
+        self.windows_os_check = QCheckBox("Windows")
+        self.macos_os_check = QCheckBox("macOS")
+        self.linux_os_check = QCheckBox("Linux")
+        os_row1.addWidget(self.windows_os_check)
+        os_row1.addWidget(self.macos_os_check)
+        os_row1.addWidget(self.linux_os_check)
+        os_layout.addLayout(os_row1)
+        
+        os_row2 = QHBoxLayout()
+        self.ios_os_check = QCheckBox("iOS")
+        self.android_os_check = QCheckBox("Android")
+        os_row2.addWidget(self.ios_os_check)
+        os_row2.addWidget(self.android_os_check)
+        os_row2.addStretch()
+        os_layout.addLayout(os_row2)
+        
+        os_group.setLayout(os_layout)
+        layout.addWidget(os_group)
+        
         # Options
         options_group = QGroupBox("Options")
         options_layout = QVBoxLayout()
@@ -555,14 +588,35 @@ class MainWindow(QMainWindow):
         else:
             self._temp_dir = None
         
+        # Get target platforms
+        target_platforms = self.get_target_platforms()
+        
         # Start extraction thread
-        self.extraction_thread = ExtractionThread(source, output, platform)
+        self.extraction_thread = ExtractionThread(source, output, platform, target_platforms)
         self.extraction_thread.progress.connect(self.update_extract_log)
         self.extraction_thread.finished.connect(self.extraction_finished)
         self.extraction_thread.error.connect(self.extraction_error)
         self.extraction_thread.start()
         
         self.statusBar().showMessage("Extracting...")
+    
+    def get_target_platforms(self):
+        """Get selected target platforms."""
+        from ..executive_producer.compatibility_wizard import Platform
+        
+        platforms = []
+        if hasattr(self, 'windows_os_check') and self.windows_os_check.isChecked():
+            platforms.append(Platform.WINDOWS)
+        if hasattr(self, 'macos_os_check') and self.macos_os_check.isChecked():
+            platforms.append(Platform.MACOS)
+        if hasattr(self, 'linux_os_check') and self.linux_os_check.isChecked():
+            platforms.append(Platform.LINUX)
+        if hasattr(self, 'ios_os_check') and self.ios_os_check.isChecked():
+            platforms.append(Platform.IOS)
+        if hasattr(self, 'android_os_check') and self.android_os_check.isChecked():
+            platforms.append(Platform.ANDROID)
+        
+        return platforms
     
     def update_extract_log(self, message: str):
         """Update extraction log."""

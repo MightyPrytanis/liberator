@@ -53,6 +53,8 @@ Examples:
     extract_parser.add_argument('-o', '--output', required=True, help='Output directory for liberated project')
     extract_parser.add_argument('--platform', choices=['auto', 'base44', 'replit', 'generic'],
                                default='auto', help='Platform type (default: auto-detect)')
+    extract_parser.add_argument('--target-os', nargs='+', choices=['windows', 'macos', 'linux', 'ios', 'android'],
+                               help='Target OS(es) for compatibility (code will be adapted automatically)')
     extract_parser.add_argument('--analyze', action='store_true', help='Analyze code after extraction')
     extract_parser.add_argument('--verbose', '-v', action='store_true', help='Verbose output')
     extract_parser.add_argument('--github', help='Push to GitHub (repo URL or "new:repo-name" to create)')
@@ -156,10 +158,26 @@ def handle_extract(args):
         for warning in result.warnings:
             print(f"  - {warning}")
     
+    # Get target platforms
+    target_platforms = []
+    if args.target_os:
+        from .executive_producer.compatibility_wizard import Platform
+        platform_map = {
+            'windows': Platform.WINDOWS,
+            'macos': Platform.MACOS,
+            'linux': Platform.LINUX,
+            'ios': Platform.IOS,
+            'android': Platform.ANDROID
+        }
+        target_platforms = [platform_map[os.lower()] for os in args.target_os if os.lower() in platform_map]
+        if target_platforms:
+            print(f"🎯 Target OS(es): {', '.join([p.value for p in target_platforms])}")
+            print(f"   Code will be adapted for compatibility...")
+    
     # Export to portable format
     print(f"\n📤 Exporting to portable format...")
     output_path = Path(args.output)
-    exporter = PortableExporter(str(output_path))
+    exporter = PortableExporter(str(output_path), target_platforms=target_platforms)
     export_result = exporter.export(result)
     
     print(f"\n✅ Successfully liberated project!")

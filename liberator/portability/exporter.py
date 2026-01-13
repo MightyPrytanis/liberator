@@ -9,16 +9,26 @@ from typing import Dict, List, Any, Optional
 from ..core.extractor import ExtractionResult
 from ..analyzer.dependency_analyzer import DependencyAnalyzer
 from ..analyzer.code_analyzer import CodeAnalyzer
+from ..executive_producer.compatibility_wizard import ExecutiveProducer, Platform
+from typing import List, Optional
 
 
 class PortableExporter:
     """Exports extracted projects to portable, open-source formats."""
     
-    def __init__(self, output_path: str):
+    def __init__(self, output_path: str, target_platforms: Optional[List[Platform]] = None):
+        """
+        Initialize exporter.
+        
+        Args:
+            output_path: Output directory path
+            target_platforms: List of target platforms for compatibility
+        """
         self.output_path = Path(output_path)
         self.output_path.mkdir(parents=True, exist_ok=True)
         self.dependency_analyzer = DependencyAnalyzer()
         self.code_analyzer = CodeAnalyzer()
+        self.target_platforms = target_platforms or []
     
     def export(self, extraction_result: ExtractionResult) -> Dict[str, Any]:
         """Export extraction result to portable format."""
@@ -47,6 +57,10 @@ class PortableExporter:
         # Generate environment template
         self._generate_env_template(extraction_result)
         
+        # Apply platform compatibility fixes if target platforms specified
+        if self.target_platforms:
+            self._apply_platform_compatibility(extraction_result)
+        
         # Generate README
         self._generate_readme(extraction_result, normalized_deps)
         
@@ -60,8 +74,40 @@ class PortableExporter:
             'output_path': str(self.output_path),
             'files_exported': len(extraction_result.files),
             'dependencies': normalized_deps,
+            'target_platforms': [p.value for p in self.target_platforms] if self.target_platforms else [],
             'status': 'success'
         }
+    
+    def _apply_platform_compatibility(self, extraction_result: ExtractionResult):
+        """Apply platform compatibility fixes using Executive Producer."""
+        if not self.target_platforms:
+            return
+        
+        try:
+            from ..ai.assistant import AIAssistant
+            
+            # Initialize Executive Producer
+            ai_assistant = AIAssistant()
+            use_ai = ai_assistant.is_available()
+            producer = ExecutiveProducer(self.output_path, ai_assistant if use_ai else None)
+            
+            # Validate and fix for each target platform
+            for platform in self.target_platforms:
+                # Validate
+                issues = producer.validate_platform(platform)
+                
+                if issues:
+                    # Auto-fix issues
+                    fix_result = producer.auto_fix_issues(platform, use_ai=use_ai)
+                    
+                    # Log fixes applied
+                    fixed_count = fix_result.get('fixed', 0)
+                    if fixed_count > 0:
+                        extraction_result.add_warning(
+                            f"Applied {fixed_count} compatibility fixes for {platform.value}"
+                        )
+        except Exception as e:
+            extraction_result.add_warning(f"Platform compatibility check failed: {str(e)}")
     
     def _generate_config_files(self, dependencies: Dict[str, List[str]], extraction_result: ExtractionResult):
         """Generate standard configuration files."""
