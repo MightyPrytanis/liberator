@@ -93,19 +93,24 @@ nano ~/.liberator/ai_config.json
 ```json
 {
   "openai_key": "sk-...",
-  "anthropic_key": "sk-ant-..."
+  "anthropic_key": "sk-ant-...",
+  "perplexity_api_key": "pplx-..."
 }
 ```
+
+**⚠️ Security Note:** The `ai_config.json` file is automatically excluded from Git via `.gitignore`. Your API keys will never be committed to the repository.
 
 **Option 3: Environment Variables**
 ```bash
 export OPENAI_API_KEY="sk-..."
 export ANTHROPIC_API_KEY="sk-ant-..."
+export PERPLEXITY_API_KEY="pplx-..."
 ```
 
 ### Supported Providers
 - **OpenAI** (GPT-4)
 - **Anthropic** (Claude)
+- **Perplexity** (Sonar API) - Uses standard library, no package needed
 
 ### Use Cases
 

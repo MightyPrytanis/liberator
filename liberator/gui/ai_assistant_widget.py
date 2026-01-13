@@ -60,7 +60,7 @@ class AIAssistantWidget(QWidget):
         
         # Provider selection
         self.provider_combo = QComboBox()
-        self.provider_combo.addItems(["OpenAI", "Anthropic"])
+        self.provider_combo.addItems(["OpenAI", "Anthropic", "Perplexity"])
         self.provider_combo.currentTextChanged.connect(self.on_provider_changed)
         header.addWidget(QLabel("Provider:"))
         header.addWidget(self.provider_combo)

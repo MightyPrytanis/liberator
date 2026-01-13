@@ -61,3 +61,16 @@ __pycache__/
 *.pyo
 *.pyd
 .Python
+
+# Secrets and API keys - NEVER COMMIT THESE
+*.key
+*.pem
+*.p12
+*.env
+.env.local
+.env.*.local
+**/ai_config.json
+~/.liberator/ai_config.json
+secrets/
+*.secret
+config/secrets.json

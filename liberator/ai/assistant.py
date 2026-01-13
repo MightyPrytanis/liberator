@@ -17,7 +17,7 @@ class AIAssistant:
         Initialize AI assistant.
         
         Args:
-            provider: AI provider ("openai" or "anthropic")
+            provider: AI provider ("openai", "anthropic", or "perplexity")
         """
         self.provider = provider
         self.api_key = self._load_api_key(provider)
@@ -29,12 +29,16 @@ class AIAssistant:
         if config_file.exists():
             try:
                 config = json.loads(config_file.read_text())
-                return config.get(f"{provider}_key")
+                # Support both provider_key and perplexity_api_key formats
+                key_name = f"{provider}_key" if provider != "perplexity" else "perplexity_api_key"
+                return config.get(key_name) or config.get(f"{provider}_api_key")
             except:
                 pass
         
         # Try environment variable
         env_key = f"{provider.upper()}_API_KEY"
+        if provider == "perplexity":
+            env_key = "PERPLEXITY_API_KEY"
         return os.environ.get(env_key)
     
     def _initialize_client(self):
@@ -54,11 +58,17 @@ class AIAssistant:
                 return Anthropic(api_key=self.api_key)
             except ImportError:
                 return None
+        elif self.provider == "perplexity":
+            # Perplexity uses HTTP requests, no special client needed
+            # We'll use requests library or urllib
+            return {"api_key": self.api_key, "provider": "perplexity"}
         
         return None
     
     def is_available(self) -> bool:
         """Check if AI assistant is available."""
+        if self.provider == "perplexity":
+            return self.api_key is not None
         return self.client is not None
     
     def ask(self, question: str, context: Optional[str] = None) -> str:
@@ -80,6 +90,8 @@ class AIAssistant:
                 return self._ask_openai(question, context)
             elif self.provider == "anthropic":
                 return self._ask_anthropic(question, context)
+            elif self.provider == "perplexity":
+                return self._ask_perplexity(question, context)
         except Exception as e:
             return f"Error: {str(e)}"
     
@@ -128,6 +140,52 @@ class AIAssistant:
         )
         
         return response.content[0].text
+    
+    def _ask_perplexity(self, question: str, context: Optional[str] = None) -> str:
+        """Ask Perplexity Sonar API."""
+        import urllib.request
+        import urllib.parse
+        
+        url = "https://api.perplexity.ai/chat/completions"
+        
+        system_prompt = "You are a helpful assistant for Liberator, a tool that extracts apps from proprietary platforms. Help users with code repair, refactoring, troubleshooting, and general questions. Provide accurate, helpful responses."
+        
+        user_message = question
+        if context:
+            user_message = f"Context:\n{context}\n\nQuestion: {question}"
+        
+        payload = {
+            "model": "sonar",
+            "messages": [
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_message}
+            ],
+            "max_tokens": 2000,
+            "temperature": 0.7
+        }
+        
+        try:
+            data = json.dumps(payload).encode('utf-8')
+            req = urllib.request.Request(
+                url,
+                data=data,
+                headers={
+                    'Authorization': f'Bearer {self.api_key}',
+                    'Content-Type': 'application/json'
+                }
+            )
+            
+            with urllib.request.urlopen(req, timeout=60) as response:
+                result = json.loads(response.read().decode('utf-8'))
+                if 'choices' in result and len(result['choices']) > 0:
+                    return result['choices'][0]['message']['content']
+                else:
+                    return "Error: Unexpected response format from Perplexity API"
+        except urllib.error.HTTPError as e:
+            error_body = e.read().decode('utf-8')
+            return f"Error: HTTP {e.code} - {error_body}"
+        except Exception as e:
+            return f"Error: {str(e)}"
     
     def repair_code(self, code: str, error_message: Optional[str] = None) -> Dict[str, Any]:
         """

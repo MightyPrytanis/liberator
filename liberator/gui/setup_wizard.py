@@ -232,7 +232,9 @@ class AIConfigPage(QWizardPage):
             <li>Compatibility guidance</li>
             <li>General help and how-to questions</li>
         </ul>
+        <p><b>Supported Providers:</b> OpenAI, Anthropic, Perplexity</p>
         <p><b>You can configure this later in settings.</b></p>
+        <p><b>Note:</b> API keys are stored securely in ~/.liberator/ai_config.json and never committed to Git.</p>
         """)
         info_label.setWordWrap(True)
         layout.addWidget(info_label)
@@ -252,6 +254,12 @@ class AIConfigPage(QWizardPage):
         self.anthropic_key.setPlaceholderText("sk-ant-...")
         self.anthropic_key.setEchoMode(QLineEdit.EchoMode.Password)
         api_layout.addWidget(self.anthropic_key)
+        
+        api_layout.addWidget(QLabel("Perplexity API Key (optional):"))
+        self.perplexity_key = QLineEdit()
+        self.perplexity_key.setPlaceholderText("pplx-...")
+        self.perplexity_key.setEchoMode(QLineEdit.EchoMode.Password)
+        api_layout.addWidget(self.perplexity_key)
         
         skip_check = QCheckBox("Skip AI setup for now")
         skip_check.setChecked(True)
@@ -280,10 +288,12 @@ class AIConfigPage(QWizardPage):
             config['openai_key'] = self.openai_key.text()
         if self.anthropic_key.text():
             config['anthropic_key'] = self.anthropic_key.text()
+        if self.perplexity_key.text():
+            config['perplexity_api_key'] = self.perplexity_key.text()
         
         if config:
             config_file.write_text(json.dumps(config, indent=2))
-            # Set restrictive permissions
+            # Set restrictive permissions (read/write for owner only)
             os.chmod(config_file, 0o600)
 
 

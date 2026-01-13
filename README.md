@@ -63,7 +63,9 @@ liberator-gui
 **AI Assistant (Optional):**
 ```bash
 pip install openai anthropic
+# Perplexity uses standard library (no package needed)
 # Then configure API keys in setup wizard or ~/.liberator/ai_config.json
+# Note: API keys are stored securely and never committed to Git
 ```
 
 ### Build macOS App Bundle
