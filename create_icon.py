@@ -232,30 +232,41 @@ def create_icon_set():
         icon.save(icon_path, 'PNG')
         print(f"✅ Created {icon_path}")
     
-    # Create .icns file for macOS
-    print("\n📦 Creating .icns file...")
-    os.system('iconutil -c icns assets/icon.iconset 2>/dev/null || echo "Note: iconutil requires .iconset directory"')
-    
-    # Create iconset directory structure
+    # Create iconset directory structure for .icns
     iconset_dir = 'assets/icon.iconset'
     os.makedirs(iconset_dir, exist_ok=True)
     
-    # Copy icons to iconset with proper naming
-    icon_mappings = {
-        16: ['icon_16x16.png', 'icon_16x16@2x.png'],
-        32: ['icon_32x32.png', 'icon_32x32@2x.png'],
-        64: ['icon_128x128.png'],  # 64pt = 128px @2x
-        128: ['icon_256x256.png'],  # 128pt = 256px @2x
-        256: ['icon_512x512.png'],  # 256pt = 512px @2x
-        512: ['icon_1024x1024.png'],  # 512pt = 1024px @2x
+    # Create iconset files with proper naming (required by iconutil)
+    iconset_files = {
+        'icon_16x16.png': 16,
+        'icon_16x16@2x.png': 32,
+        'icon_32x32.png': 32,
+        'icon_32x32@2x.png': 64,
+        'icon_128x128.png': 128,
+        'icon_128x128@2x.png': 256,
+        'icon_256x256.png': 256,
+        'icon_256x256@2x.png': 512,
+        'icon_512x512.png': 512,
+        'icon_512x512@2x.png': 1024,
     }
     
-    # For now, create a simple .icns using sips (macOS built-in)
-    # Or we can use the PNG directly
-    print("✅ Icon files created!")
-    print("\nTo create .icns file on macOS, run:")
-    print("  iconutil -c icns assets/icon.iconset")
-    print("\nOr use the 512x512 PNG as icon.icns")
+    print("\n📦 Creating iconset for .icns file...")
+    for iconset_name, size in iconset_files.items():
+        icon = create_icon(size, 'gold')
+        iconset_path = os.path.join(iconset_dir, iconset_name)
+        icon.save(iconset_path, 'PNG')
+        print(f"   Created {iconset_name}")
+    
+    # Create .icns file using iconutil (macOS)
+    print("\n📦 Creating .icns file...")
+    icns_path = 'assets/icon.icns'
+    result = os.system(f'iconutil -c icns "{iconset_dir}" -o "{icns_path}" 2>&1')
+    
+    if result == 0:
+        print(f"✅ Created {icns_path}")
+    else:
+        print("⚠️  Could not create .icns (iconutil may not be available)")
+        print("   Using 512x512 PNG as fallback - app will use PNG icon")
 
 if __name__ == '__main__':
     print("🎨 Generating Liberator app icon...")
