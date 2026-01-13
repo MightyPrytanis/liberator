@@ -88,120 +88,189 @@ def create_matrix_background(width, height, color_scheme='silver'):
     return img
 
 def create_b24_silhouette(width, height):
-    """Create B-24 Liberator bomber silhouette."""
+    """Create B-24 Liberator bomber silhouette based on reference image."""
     img = Image.new('RGBA', (width, height), (0, 0, 0, 0))
     draw = ImageDraw.Draw(img)
     
-    # B-24 characteristic features:
-    # - Twin tail booms
-    # - High wing
-    # - Four engines (two on each wing)
-    # - Distinctive fuselage
+    # B-24 characteristic features from reference:
+    # - High-mounted wing (positioned high on fuselage)
+    # - Four engine nacelles with propellers
+    # - Twin tail booms (H-tail configuration)
+    # - Long, slender fuselage
+    # - Star insignia on fuselage
     
     center_x = width // 2
     center_y = height // 2
     
-    # Main fuselage (central body)
-    fuselage_width = width * 0.15
-    fuselage_height = height * 0.4
-    fuselage_x = center_x - fuselage_width // 2
-    fuselage_y = center_y - fuselage_height // 2 + height * 0.1
+    # Position aircraft slightly to the right (as in reference)
+    offset_x = width * 0.05
     
-    # Draw fuselage
+    # Main fuselage (long and slender, positioned left of center)
+    fuselage_width = width * 0.12
+    fuselage_length = height * 0.5
+    fuselage_x = center_x - width * 0.25 + offset_x
+    fuselage_y = center_y - fuselage_length // 2
+    
+    # Draw fuselage as elongated ellipse
     draw.ellipse([fuselage_x, fuselage_y, 
                   fuselage_x + fuselage_width, 
-                  fuselage_y + fuselage_height],
+                  fuselage_y + fuselage_length],
                  fill=(184, 115, 51, 255),  # Copper
                  outline=(212, 175, 55, 255),  # Gold outline
-                 width=2)
+                 width=max(1, width // 256))
     
-    # Wings (high wing configuration)
-    wing_span = width * 0.85
-    wing_width = height * 0.12
-    wing_y = center_y - height * 0.15
+    # High-mounted wing (positioned high on fuselage)
+    wing_span = width * 0.75
+    wing_chord = height * 0.08
+    wing_y = center_y - height * 0.2  # High on fuselage
     
-    # Left wing
-    draw.ellipse([center_x - wing_span // 2, wing_y,
-                  center_x - wing_span // 2 + wing_span * 0.4, wing_y + wing_width],
-                fill=(212, 175, 55, 255),  # Gold
-                outline=(205, 127, 50, 255),  # Bronze outline
-                width=2)
+    # Left wing (extends from fuselage)
+    wing_left_x = fuselage_x + fuselage_width // 2
+    wing_left_end = center_x - wing_span // 2 + offset_x
+    
+    # Draw left wing
+    draw.polygon([
+        (wing_left_x, wing_y),
+        (wing_left_end, wing_y),
+        (wing_left_end, wing_y + wing_chord),
+        (wing_left_x, wing_y + wing_chord)
+    ], fill=(212, 175, 55, 255), outline=(205, 127, 50, 255))  # Gold with bronze outline
     
     # Right wing
-    draw.ellipse([center_x + wing_span // 2 - wing_span * 0.4, wing_y,
-                  center_x + wing_span // 2, wing_y + wing_width],
-                fill=(212, 175, 55, 255),  # Gold
-                outline=(205, 127, 50, 255),  # Bronze outline
-                width=2)
+    wing_right_x = fuselage_x + fuselage_width // 2
+    wing_right_end = center_x + wing_span // 2 + offset_x
     
-    # Engine nacelles (4 total - 2 per wing)
-    engine_size = width * 0.08
+    draw.polygon([
+        (wing_right_x, wing_y),
+        (wing_right_end, wing_y),
+        (wing_right_end, wing_y + wing_chord),
+        (wing_right_x, wing_y + wing_chord)
+    ], fill=(212, 175, 55, 255), outline=(205, 127, 50, 255))
     
-    # Left wing engines
-    engine_y = wing_y + wing_width // 2 - engine_size // 2
-    draw.ellipse([center_x - wing_span * 0.3 - engine_size // 2, engine_y,
-                  center_x - wing_span * 0.3 + engine_size // 2, engine_y + engine_size],
+    # Four engine nacelles (2 per wing, on leading edge)
+    engine_width = width * 0.06
+    engine_height = height * 0.1
+    engine_y = wing_y + wing_chord // 2 - engine_height // 2
+    
+    # Left wing engines (outer and inner)
+    left_outer_x = wing_left_end + engine_width // 2
+    left_inner_x = wing_left_x + (wing_left_end - wing_left_x) * 0.4
+    
+    # Left outer engine
+    draw.ellipse([left_outer_x - engine_width // 2, engine_y,
+                  left_outer_x + engine_width // 2, engine_y + engine_height],
                 fill=(205, 127, 50, 255),  # Bronze
                 outline=(212, 175, 55, 255),  # Gold outline
-                width=2)
+                width=max(1, width // 256))
     
-    draw.ellipse([center_x - wing_span * 0.15 - engine_size // 2, engine_y,
-                  center_x - wing_span * 0.15 + engine_size // 2, engine_y + engine_size],
+    # Left inner engine
+    draw.ellipse([left_inner_x - engine_width // 2, engine_y,
+                  left_inner_x + engine_width // 2, engine_y + engine_height],
                 fill=(205, 127, 50, 255),  # Bronze
                 outline=(212, 175, 55, 255),  # Gold outline
-                width=2)
+                width=max(1, width // 256))
     
     # Right wing engines
-    draw.ellipse([center_x + wing_span * 0.15 - engine_size // 2, engine_y,
-                  center_x + wing_span * 0.15 + engine_size // 2, engine_y + engine_size],
+    right_outer_x = wing_right_end - engine_width // 2
+    right_inner_x = wing_right_x + (wing_right_end - wing_right_x) * 0.6
+    
+    # Right outer engine
+    draw.ellipse([right_outer_x - engine_width // 2, engine_y,
+                  right_outer_x + engine_width // 2, engine_y + engine_height],
                 fill=(205, 127, 50, 255),  # Bronze
                 outline=(212, 175, 55, 255),  # Gold outline
-                width=2)
+                width=max(1, width // 256))
     
-    draw.ellipse([center_x + wing_span * 0.3 - engine_size // 2, engine_y,
-                  center_x + wing_span * 0.3 + engine_size // 2, engine_y + engine_size],
+    # Right inner engine
+    draw.ellipse([right_inner_x - engine_width // 2, engine_y,
+                  right_inner_x + engine_width // 2, engine_y + engine_height],
                 fill=(205, 127, 50, 255),  # Bronze
                 outline=(212, 175, 55, 255),  # Gold outline
-                width=2)
+                width=max(1, width // 256))
     
-    # Twin tail booms (distinctive B-24 feature)
-    boom_width = width * 0.04
-    boom_height = height * 0.25
-    boom_y = center_y + height * 0.15
+    # Propeller on front-most engine (left outer)
+    prop_size = engine_width * 1.2
+    prop_x = left_outer_x
+    prop_y = engine_y + engine_height // 2
     
-    # Left boom
-    draw.ellipse([center_x - wing_span * 0.25 - boom_width // 2, boom_y,
-                  center_x - wing_span * 0.25 + boom_width // 2, boom_y + boom_height],
+    # Draw propeller as circle with metallic effect
+    draw.ellipse([prop_x - prop_size // 2, prop_y - prop_size // 2,
+                  prop_x + prop_size // 2, prop_y + prop_size // 2],
+                fill=(192, 192, 192, 200),  # Semi-transparent silver
+                outline=(212, 175, 55, 255),  # Gold outline
+                width=max(1, width // 256))
+    
+    # Twin tail booms (H-tail configuration)
+    boom_width = width * 0.03
+    boom_height = height * 0.3
+    boom_y = center_y + height * 0.1
+    
+    # Left tail boom (extends from left wing)
+    left_boom_x = wing_left_end + boom_width // 2
+    
+    draw.ellipse([left_boom_x - boom_width // 2, boom_y,
+                  left_boom_x + boom_width // 2, boom_y + boom_height],
                 fill=(192, 192, 192, 255),  # Silver
                 outline=(212, 175, 55, 255),  # Gold outline
-                width=2)
+                width=max(1, width // 256))
     
-    # Right boom
-    draw.ellipse([center_x + wing_span * 0.25 - boom_width // 2, boom_y,
-                  center_x + wing_span * 0.25 + boom_width // 2, boom_y + boom_height],
+    # Right tail boom (extends from right wing)
+    right_boom_x = wing_right_end - boom_width // 2
+    
+    draw.ellipse([right_boom_x - boom_width // 2, boom_y,
+                  right_boom_x + boom_width // 2, boom_y + boom_height],
                 fill=(192, 192, 192, 255),  # Silver
                 outline=(212, 175, 55, 255),  # Gold outline
-                width=2)
+                width=max(1, width // 256))
     
-    # Tail fins
-    fin_width = width * 0.06
-    fin_height = height * 0.15
+    # Horizontal stabilizer connecting the two booms (H-tail)
+    stabilizer_y = boom_y + boom_height * 0.7
+    stabilizer_width = right_boom_x - left_boom_x
+    stabilizer_height = height * 0.02
+    
+    draw.rectangle([left_boom_x, stabilizer_y,
+                    right_boom_x, stabilizer_y + stabilizer_height],
+                  fill=(212, 175, 55, 255),  # Gold
+                  outline=(205, 127, 50, 255))  # Bronze outline
+    
+    # Vertical stabilizers (fins) on each boom
+    fin_width = width * 0.04
+    fin_height = height * 0.12
     
     # Left fin
-    points_left = [
-        (center_x - wing_span * 0.25, boom_y + boom_height),
-        (center_x - wing_span * 0.25 - fin_width // 2, boom_y + boom_height + fin_height),
-        (center_x - wing_span * 0.25 + fin_width // 2, boom_y + boom_height + fin_height)
-    ]
-    draw.polygon(points_left, fill=(212, 175, 55, 255), outline=(205, 127, 50, 255))
+    draw.polygon([
+        (left_boom_x, boom_y + boom_height),
+        (left_boom_x - fin_width // 2, boom_y + boom_height + fin_height),
+        (left_boom_x + fin_width // 2, boom_y + boom_height + fin_height)
+    ], fill=(212, 175, 55, 255), outline=(205, 127, 50, 255))  # Gold with bronze outline
     
     # Right fin
-    points_right = [
-        (center_x + wing_span * 0.25, boom_y + boom_height),
-        (center_x + wing_span * 0.25 - fin_width // 2, boom_y + boom_height + fin_height),
-        (center_x + wing_span * 0.25 + fin_width // 2, boom_y + boom_height + fin_height)
-    ]
-    draw.polygon(points_right, fill=(212, 175, 55, 255), outline=(205, 127, 50, 255))
+    draw.polygon([
+        (right_boom_x, boom_y + boom_height),
+        (right_boom_x - fin_width // 2, boom_y + boom_height + fin_height),
+        (right_boom_x + fin_width // 2, boom_y + boom_height + fin_height)
+    ], fill=(212, 175, 55, 255), outline=(205, 127, 50, 255))
+    
+    # Star insignia on fuselage (towards rear, as in reference)
+    star_x = fuselage_x + fuselage_width * 0.6
+    star_y = center_y + height * 0.05
+    star_size = width * 0.03
+    
+    # Draw five-pointed star
+    star_points = []
+    for i in range(10):  # 5 points, 2 vertices each
+        angle = (i * math.pi / 5) - (math.pi / 2)
+        if i % 2 == 0:
+            # Outer point
+            radius = star_size
+        else:
+            # Inner point
+            radius = star_size * 0.4
+        x = star_x + radius * math.cos(angle)
+        y = star_y + radius * math.sin(angle)
+        star_points.append((x, y))
+    
+    draw.polygon(star_points, fill=(255, 255, 255, 255), outline=(212, 175, 55, 255))  # White star with gold outline
     
     return img
 
