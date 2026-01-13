@@ -6,6 +6,7 @@ Liberator is a complete, end-to-end solution for "liberating" apps originally cr
 
 ## Features
 
+### Core Features
 - 🔍 **Automatic Platform Detection** - Automatically detects Base44, Replit, and other platforms
 - 📦 **Complete Extraction** - Extracts all code, dependencies, and configuration files
 - 🔬 **Code Analysis** - Reverse-engineers code structure, dependencies, and patterns
@@ -15,14 +16,63 @@ Liberator is a complete, end-to-end solution for "liberating" apps originally cr
 - 📚 **Documentation Generation** - Auto-generates comprehensive README files
 - 🔓 **Open Source Ready** - Adds LICENSE, .gitignore, and open-source best practices
 
+### 🆕 New Features
+- 🎯 **Single-Click Setup Wizard** - Guided setup in just a few clicks
+- 🤖 **AI-Powered Assistant** - Code repair, refactoring, troubleshooting, and help
+- 🎬 **Executive Producer** - Guarantees apps work on Windows, macOS, Linux, iOS, Android
+- 📁 **Project Management** - Track and manage all liberated projects
+
 ## Installation
 
-### From Source
+### Quick Start (Recommended)
 
+**Run the Setup Wizard for easy installation:**
+```bash
+python3 run_setup_wizard.py
+```
+
+The wizard will:
+- Install all dependencies
+- Configure AI assistant (optional)
+- Verify everything works
+- Get you ready in minutes!
+
+### Manual Installation
+
+**From Source:**
 ```bash
 git clone https://github.com/yourusername/liberator.git
 cd liberator
 pip install -e .
+```
+
+**GUI Installation (macOS):**
+```bash
+# Install GUI dependencies
+./install_gui.sh
+
+# Or manually:
+pip install PyQt6
+
+# Run the GUI
+python3 liberator_gui.py
+# Or
+liberator-gui
+```
+
+**AI Assistant (Optional):**
+```bash
+pip install openai anthropic
+# Then configure API keys in setup wizard or ~/.liberator/ai_config.json
+```
+
+### Build macOS App Bundle
+
+To create a native macOS app:
+
+```bash
+./build_macos_app.sh
+open dist/Liberator.app
 ```
 
 ### Setting Up GitHub (For Contributors)
@@ -49,11 +99,41 @@ pip install -e ".[dev]"
 
 ## Usage
 
-### Basic Usage
+### GUI (macOS)
+
+Launch the graphical interface:
+
+```bash
+python3 liberator_gui.py
+# Or double-click Liberator.app if built
+```
+
+The GUI provides:
+- **Extract Tab**: Visual interface for liberating projects
+  - Drag & drop project folders
+  - Platform selection
+  - Real-time progress tracking
+  - Extraction logs
+  
+- **Analyze Tab**: Dependency and code structure analysis
+  - Visual dependency tree
+  - Language detection
+  - Code structure overview
+
+### Command Line
 
 ```bash
 # Liberate a project (auto-detect platform)
 liberator extract /path/to/captive-project -o ./liberated-app
+
+# Liberate from URL (GitHub, GitLab, etc.)
+liberator extract https://github.com/user/repo -o ./liberated-app
+
+# Liberate and push to GitHub (create new repo)
+liberator extract /path/to/project -o ./liberated-app --github "new:my-repo"
+
+# Liberate and push to existing GitHub repo
+liberator extract /path/to/project -o ./liberated-app --github "https://github.com/user/repo"
 
 # Specify platform explicitly
 liberator extract /path/to/replit-project -o ./liberated-app --platform replit

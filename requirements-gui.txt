@@ -1,0 +1,8 @@
+# GUI dependencies for Liberator
+# Install with: pip install -r requirements-gui.txt
+
+PyQt6>=6.6.0
+
+# AI Assistant (optional)
+# openai>=1.0.0
+# anthropic>=0.18.0

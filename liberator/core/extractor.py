@@ -5,6 +5,7 @@ Base extractor class and utilities for platform-specific extraction.
 import os
 import json
 import shutil
+import tempfile
 from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Dict, List, Optional, Any
@@ -44,9 +45,21 @@ class BaseExtractor(ABC):
     """Base class for platform-specific extractors."""
     
     def __init__(self, source_path: str):
-        self.source_path = Path(source_path)
-        if not self.source_path.exists():
-            raise ValueError(f"Source path does not exist: {source_path}")
+        # Check if source is a URL
+        from .url_handler import URLHandler
+        
+        if URLHandler.is_url(source_path):
+            # Download/clone from URL
+            temp_dir = Path(tempfile.mkdtemp(prefix='liberator_'))
+            self.source_path = URLHandler.download_from_url(source_path, temp_dir)
+            self._is_temp = True
+            self._temp_dir = temp_dir
+        else:
+            self.source_path = Path(source_path)
+            if not self.source_path.exists():
+                raise ValueError(f"Source path does not exist: {source_path}")
+            self._is_temp = False
+            self._temp_dir = None
     
     @abstractmethod
     def detect(self) -> bool:

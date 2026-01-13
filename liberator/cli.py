@@ -5,6 +5,7 @@ Liberator CLI - Command-line interface for liberating apps.
 
 import argparse
 import sys
+import tempfile
 from pathlib import Path
 from typing import Optional
 
@@ -24,6 +25,15 @@ Examples:
   # Liberate a Replit project
   liberator extract /path/to/replit-project -o ./liberated-app
 
+  # Liberate from GitHub URL
+  liberator extract https://github.com/user/repo -o ./liberated-app
+
+  # Liberate and push to new GitHub repo
+  liberator extract /path/to/project -o ./liberated-app --github "new:my-repo"
+
+  # Liberate and push to existing GitHub repo
+  liberator extract /path/to/project -o ./liberated-app --github "https://github.com/user/repo"
+
   # Liberate a Base44 project
   liberator extract /path/to/base44-project -o ./liberated-app
 
@@ -39,12 +49,15 @@ Examples:
     
     # Extract command
     extract_parser = subparsers.add_parser('extract', help='Extract project from proprietary platform')
-    extract_parser.add_argument('source', help='Source path of the project to extract')
+    extract_parser.add_argument('source', help='Source path or URL (GitHub, GitLab, etc.) of the project to extract')
     extract_parser.add_argument('-o', '--output', required=True, help='Output directory for liberated project')
     extract_parser.add_argument('--platform', choices=['auto', 'base44', 'replit', 'generic'],
                                default='auto', help='Platform type (default: auto-detect)')
     extract_parser.add_argument('--analyze', action='store_true', help='Analyze code after extraction')
     extract_parser.add_argument('--verbose', '-v', action='store_true', help='Verbose output')
+    extract_parser.add_argument('--github', help='Push to GitHub (repo URL or "new:repo-name" to create)')
+    extract_parser.add_argument('--github-private', action='store_true', help='Create private GitHub repository')
+    extract_parser.add_argument('--github-branch', default='main', help='GitHub branch name (default: main)')
     
     # Analyze command
     analyze_parser = subparsers.add_parser('analyze', help='Analyze project dependencies and structure')
@@ -85,10 +98,29 @@ Examples:
 
 def handle_extract(args):
     """Handle extract command."""
-    source_path = Path(args.source)
-    if not source_path.exists():
-        print(f"Error: Source path does not exist: {source_path}", file=sys.stderr)
-        sys.exit(1)
+    from ..core.url_handler import URLHandler
+    
+    source = args.source
+    
+    # Check if source is a URL
+    if URLHandler.is_url(source):
+        print(f"🌐 Source is a URL: {source}")
+        print(f"📥 Downloading/cloning project...")
+        
+        try:
+            temp_dir = Path(tempfile.mkdtemp(prefix='liberator_'))
+            source_path = URLHandler.download_from_url(source, temp_dir)
+            print(f"✅ Downloaded to: {source_path}")
+            is_url_source = True
+        except Exception as e:
+            print(f"❌ Error downloading from URL: {e}", file=sys.stderr)
+            sys.exit(1)
+    else:
+        source_path = Path(source)
+        if not source_path.exists():
+            print(f"Error: Source path does not exist: {source_path}", file=sys.stderr)
+            sys.exit(1)
+        is_url_source = False
     
     print(f"🔍 Detecting platform for: {source_path}")
     
@@ -134,6 +166,56 @@ def handle_extract(args):
     print(f"   Output: {output_path}")
     print(f"   Files: {export_result['files_exported']}")
     print(f"   Dependencies: {sum(len(deps) for deps in export_result['dependencies'].values())}")
+    
+    # Push to GitHub if requested
+    if args.github:
+        print(f"\n🐙 Pushing to GitHub...")
+        from .integrations.github import GitHubIntegration
+        
+        github = GitHubIntegration()
+        output_path_obj = Path(output_path)
+        
+        if args.github.startswith('new:'):
+            # Create new repository
+            repo_name = args.github.replace('new:', '')
+            print(f"   Creating repository: {repo_name}")
+            success, repo_url = github.create_repository(
+                repo_name,
+                description="Liberated from proprietary platform",
+                private=args.github_private
+            )
+            if success:
+                print(f"   ✅ Repository created: {repo_url}")
+            else:
+                print(f"   ❌ Failed to create repository: {repo_url}")
+                sys.exit(1)
+        else:
+            # Use existing repository
+            repo_url = args.github
+        
+        # Push to repository
+        success, message = github.push_to_repository(
+            output_path_obj,
+            repo_url,
+            branch=args.github_branch,
+            commit_message="Initial commit: Liberated project"
+        )
+        
+        if success:
+            print(f"   ✅ {message}")
+            print(f"   🔗 View at: {repo_url}")
+        else:
+            print(f"   ❌ {message}")
+            sys.exit(1)
+    
+    # Cleanup temp directory if source was a URL
+    if is_url_source:
+        try:
+            from ..core.url_handler import URLHandler
+            URLHandler.cleanup_temp_dir(temp_dir)
+            print(f"🧹 Cleaned up temporary files")
+        except:
+            pass
     
     if args.analyze:
         print(f"\n🔬 Analyzing code structure...")

@@ -24,6 +24,9 @@ setup(
         # No external dependencies - pure Python standard library
     ],
     extras_require={
+        'gui': [
+            'PyQt6>=6.6.0',
+        ],
         'dev': [
             'pytest>=7.0.0',
             'pytest-cov>=4.0.0',
@@ -34,6 +37,7 @@ setup(
     entry_points={
         'console_scripts': [
             'liberator=liberator.cli:main',
+            'liberator-gui=liberator.gui.app:main',
         ],
     },
     classifiers=[
